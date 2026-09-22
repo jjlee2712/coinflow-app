@@ -1,9 +1,14 @@
 module github.com/jjlee2712/coinflow/backend
 
-go 1.25.11
+go 1.26.0
 
 require (
-	github.com/golang-migrate/migrate v3.5.4+incompatible
-	github.com/golang-migrate/migrate/v4 v4.20.1 // indirect
-	github.com/lib/pq v1.12.3 // indirect
+	github.com/golang-migrate/migrate/v4 v4.20.1
+	github.com/lib/pq v1.12.3
+)
+
+require (
+	github.com/golang-jwt/jwt v3.2.2+incompatible
+	golang.org/x/crypto v0.57.0
+	golang.org/x/sys v0.48.0 // indirect
 )
