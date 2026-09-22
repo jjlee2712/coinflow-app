@@ -20,6 +20,7 @@ services:
     environment:
       PORT: "8080"
       DB_URL: "postgres://coinflow:coinflow@db:5432/coinflow?sslmode=disable"
+      JWT_SECRET: "dev-secret-change-in-production"
     depends_on:
       db:
         condition: service_healthy
