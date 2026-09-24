@@ -70,7 +70,7 @@ func(h *AuthHandler) Login(w http.ResponseWriter, r *http.Request){
     return
 	}
 
-	if err := service.CheckPassowrd(req.Password, user.Password)
+	if err := service.CheckPassword(req.Password, user.Password);
 	err != nil {
 		http.Error(w, "Invalid Email or Credentials", http.StatusUnauthorized)
     return

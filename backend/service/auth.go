@@ -3,7 +3,7 @@ package service
 import (
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -12,8 +12,8 @@ func HashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-func CheckPassowrd(password, hash string) error{
-	return bcrypt.CompareHashAndPassword([]byte(password), []byte(hash))
+func CheckPassword(password, hash string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }
 
 func CreateToken(userID int64, secret string) (string, error) {
