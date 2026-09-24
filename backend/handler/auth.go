@@ -49,6 +49,7 @@ func(h *AuthHandler) Register(w http.ResponseWriter, r *http.Request){
 
 	if err != nil {
 		http.Error(w, "Email already exists", http.StatusConflict)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
