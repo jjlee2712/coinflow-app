@@ -15,6 +15,7 @@ import (
 	"github.com/jjlee2712/coinflow/backend/config"
 	"github.com/jjlee2712/coinflow/backend/db"
 	"github.com/jjlee2712/coinflow/backend/handler"
+	"github.com/jjlee2712/coinflow/backend/middleware"
 )
 
 //go:embed migrations/*.sql
@@ -58,10 +59,21 @@ func main() {
 		JWTSecret: cfg.JWTSecret,
 	}
 
+	categoryHandler := &handler.CategoryHandler{
+		Queries: queries,
+	}
+
+	auth := middleware.AuthMiddleware(cfg.JWTSecret)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handler.Health)
 	mux.HandleFunc("POST /auth/register", authHandler.Register)
 	mux.HandleFunc("POST /auth/login", authHandler.Login)
+
+	mux.Handle("GET /categories", auth(http.HandlerFunc(categoryHandler.List)))
+	mux.Handle("POST /categories", auth(http.HandlerFunc(categoryHandler.Create)))
+	mux.Handle("PUT /categories/{categoryId}", auth(http.HandlerFunc(categoryHandler.Update)))
+	mux.Handle("DELETE /categories/{categoryId}", auth(http.HandlerFunc(categoryHandler.Delete)))
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	log.Printf("Server starting on %s", addr)
