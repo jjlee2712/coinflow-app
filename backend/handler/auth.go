@@ -52,6 +52,14 @@ func(h *AuthHandler) Register(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
+	defaultCategories := []string{"Food", "Transport", "Entertainment", "Health", "Other"}
+	for _, name := range defaultCategories {
+		h.Queries.CreateCategory(r.Context(), db.CreateCategoryParams{
+			UserID: user.ID,
+			Name: name,
+		})
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)

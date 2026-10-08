@@ -80,7 +80,7 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request){
 	})
 
 	if err != nil {
-		http.Error(w, "Not Found", http.StatusInternalServerError)
+		http.Error(w, "Not Found", http.StatusNotFound)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -97,19 +97,12 @@ func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	var req categoryRequest
-	if err := json.NewDecoder(r.Body).Decode(&req)
-	err != nil {
-		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
-		return		
-	}
-
 	if err := h.Queries.DeleteCategory(r.Context(), db.DeleteCategoryParams{
 		ID: categoryId,
 		UserID: userID,
 	})
 	err != nil {
-		http.Error(w, "Not found", http.StatusBadRequest)
+		http.Error(w, "Not found", http.StatusNotFound)
 		return
 	}
 
