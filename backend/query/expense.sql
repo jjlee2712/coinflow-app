@@ -8,6 +8,14 @@ SELECT * FROM expenses
 WHERE user_id = $1
 ORDER BY date DESC;
 
+-- name: ListExpensesByFilter :many
+SELECT * FROM expenses
+WHERE user_id = $1
+  AND ($2::bigint = 0 OR category_id = $2)
+  AND ($3::date IS NULL OR date >= $3)
+  AND ($4::date IS NULL OR date <= $4)
+ORDER BY date DESC;
+
 -- name: GetExpense :one
 SELECT * FROM expenses
 WHERE id = $1 AND user_id = $2;

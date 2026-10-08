@@ -86,6 +86,58 @@ func (q *Queries) GetExpense(ctx context.Context, arg GetExpenseParams) (Expense
 	return i, err
 }
 
+const listExpensesByFilter = `-- name: ListExpensesByFilter :many
+SELECT id, user_id, category_id, amount, note, date, created_at FROM expenses
+WHERE user_id = $1
+  AND ($2::bigint = 0 OR category_id = $2)
+  AND ($3::date IS NULL OR date >= $3)
+  AND ($4::date IS NULL OR date <= $4)
+ORDER BY date DESC
+`
+
+type ListExpensesByFilterParams struct {
+	UserID  int64
+	Column2 int64
+	Column3 time.Time
+	Column4 time.Time
+}
+
+func (q *Queries) ListExpensesByFilter(ctx context.Context, arg ListExpensesByFilterParams) ([]Expense, error) {
+	rows, err := q.db.QueryContext(ctx, listExpensesByFilter,
+		arg.UserID,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Expense
+	for rows.Next() {
+		var i Expense
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.CategoryID,
+			&i.Amount,
+			&i.Note,
+			&i.Date,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listExpensesByUser = `-- name: ListExpensesByUser :many
 SELECT id, user_id, category_id, amount, note, date, created_at FROM expenses
 WHERE user_id = $1

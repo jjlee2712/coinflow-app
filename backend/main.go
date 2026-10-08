@@ -63,6 +63,10 @@ func main() {
 		Queries: queries,
 	}
 
+	expensesHandler := &handler.ExpensesHandler{
+		Queries: queries,
+	}
+
 	auth := middleware.AuthMiddleware(cfg.JWTSecret)
 
 	mux := http.NewServeMux()
@@ -74,6 +78,12 @@ func main() {
 	mux.Handle("POST /categories", auth(http.HandlerFunc(categoryHandler.Create)))
 	mux.Handle("PUT /categories/{categoryId}", auth(http.HandlerFunc(categoryHandler.Update)))
 	mux.Handle("DELETE /categories/{categoryId}", auth(http.HandlerFunc(categoryHandler.Delete)))
+
+	mux.Handle("POST /expenses", auth(http.HandlerFunc(expensesHandler.Create)))
+	mux.Handle("GET /expenses", auth(http.HandlerFunc(expensesHandler.List)))
+	mux.Handle("GET /expenses/{expensesId}", auth(http.HandlerFunc(expensesHandler.GetExpensesByID)))
+	mux.Handle("PUT /expenses/{expensesId}", auth(http.HandlerFunc(expensesHandler.Update)))
+	mux.Handle("DELETE /expenses/{expensesId}", auth(http.HandlerFunc(expensesHandler.Delete)))
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	log.Printf("Server starting on %s", addr)
