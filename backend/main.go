@@ -55,7 +55,7 @@ func main() {
 	queries := db.New(database)
 
 	authHandler := &handler.AuthHandler{
-		Queries: queries,
+		Queries:   queries,
 		JWTSecret: cfg.JWTSecret,
 	}
 
@@ -64,6 +64,10 @@ func main() {
 	}
 
 	expensesHandler := &handler.ExpensesHandler{
+		Queries: queries,
+	}
+
+	budgetHandler := &handler.BudgetHandler{
 		Queries: queries,
 	}
 
@@ -84,6 +88,12 @@ func main() {
 	mux.Handle("GET /expenses/{expensesId}", auth(http.HandlerFunc(expensesHandler.GetExpensesByID)))
 	mux.Handle("PUT /expenses/{expensesId}", auth(http.HandlerFunc(expensesHandler.Update)))
 	mux.Handle("DELETE /expenses/{expensesId}", auth(http.HandlerFunc(expensesHandler.Delete)))
+
+	mux.Handle("POST /budgets", auth(http.HandlerFunc(budgetHandler.Create)))
+	mux.Handle("GET /budgets", auth(http.HandlerFunc(budgetHandler.List)))
+	mux.Handle("GET /budgets/summary", auth(http.HandlerFunc(budgetHandler.GetBudgetSummary)))
+	mux.Handle("PUT /budgets/{budgetId}", auth(http.HandlerFunc(budgetHandler.Update)))
+	mux.Handle("DELETE /budgets/{budgetId}", auth(http.HandlerFunc(budgetHandler.Delete)))
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	log.Printf("Server starting on %s", addr)

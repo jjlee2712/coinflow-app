@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createBudget = `-- name: CreateBudget :one
@@ -70,6 +71,60 @@ func (q *Queries) GetBudget(ctx context.Context, arg GetBudgetParams) (Budget, e
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const getBudgetSummary = `-- name: GetBudgetSummary :many
+SELECT 
+EP.category_id,
+SUM(BD.amount) as budgetAmount,
+SUM(EP.amount) as totalSpent,
+SUM(BD.amount) - SUM(EP.amount) as remaining,
+(SUM(EP.amount) / SUM(BD.amount)) * 100 as percentage,
+DATE_TRUNC('month', NOW())
+FROM users U
+LEFT JOIN expenses EP ON U.id = EP.user_id
+LEFT JOIN budgets BD ON U.id = BD.user_id AND EP.category_id = BD.category_id
+WHERE U.id = $1
+GROUP BY EP.category_id
+`
+
+type GetBudgetSummaryRow struct {
+	CategoryID   sql.NullInt64
+	Budgetamount int64
+	Totalspent   int64
+	Remaining    int32
+	Percentage   int32
+	DateTrunc    int64
+}
+
+func (q *Queries) GetBudgetSummary(ctx context.Context, id int64) ([]GetBudgetSummaryRow, error) {
+	rows, err := q.db.QueryContext(ctx, getBudgetSummary, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetBudgetSummaryRow
+	for rows.Next() {
+		var i GetBudgetSummaryRow
+		if err := rows.Scan(
+			&i.CategoryID,
+			&i.Budgetamount,
+			&i.Totalspent,
+			&i.Remaining,
+			&i.Percentage,
+			&i.DateTrunc,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listBudgetsByUser = `-- name: ListBudgetsByUser :many
