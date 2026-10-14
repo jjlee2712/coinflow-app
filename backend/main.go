@@ -15,6 +15,7 @@ import (
 	"github.com/jjlee2712/coinflow/backend/config"
 	"github.com/jjlee2712/coinflow/backend/db"
 	"github.com/jjlee2712/coinflow/backend/handler"
+	"github.com/jjlee2712/coinflow/backend/hub"
 	"github.com/jjlee2712/coinflow/backend/middleware"
 )
 
@@ -54,6 +55,8 @@ func main() {
 
 	queries := db.New(database)
 
+	h := hub.NewHub()
+
 	authHandler := &handler.AuthHandler{
 		Queries:   queries,
 		JWTSecret: cfg.JWTSecret,
@@ -88,6 +91,10 @@ func main() {
 	mux.Handle("GET /expenses/{expensesId}", auth(http.HandlerFunc(expensesHandler.GetExpensesByID)))
 	mux.Handle("PUT /expenses/{expensesId}", auth(http.HandlerFunc(expensesHandler.Update)))
 	mux.Handle("DELETE /expenses/{expensesId}", auth(http.HandlerFunc(expensesHandler.Delete)))
+
+	wsHandler := &handler.WSHandler{Hub: h, JWTSecret: cfg.JWTSecret}
+
+	mux.HandleFunc("GET /ws", wsHandler.ServeWS)
 
 	mux.Handle("POST /budgets", auth(http.HandlerFunc(budgetHandler.Create)))
 	mux.Handle("GET /budgets", auth(http.HandlerFunc(budgetHandler.List)))

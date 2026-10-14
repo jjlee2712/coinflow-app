@@ -24,7 +24,7 @@ func (h *BudgetHandler) getUserID(r *http.Request) int64 {
 
 func (h *BudgetHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserID(r)
-	var req expensesRequest
+	var req budgetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid Request Body.", http.StatusBadRequest)
 		return
@@ -71,7 +71,7 @@ func (h *BudgetHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req expensesRequest
+	var req budgetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid Request Body.", http.StatusBadRequest)
 		return

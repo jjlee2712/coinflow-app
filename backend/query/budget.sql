@@ -23,14 +23,15 @@ WHERE id = $1 AND user_id = $2;
 
 -- name: GetBudgetSummary :many
 SELECT 
-EP.category_id,
+BD.category_id,
 SUM(BD.amount) as budgetAmount,
-SUM(EP.amount) as totalSpent,
+COALESCE(SUM(EP.amount), 0) as totalSpent,
 SUM(BD.amount) - SUM(EP.amount) as remaining,
 (SUM(EP.amount) / SUM(BD.amount)) * 100 as percentage,
 DATE_TRUNC('month', NOW())
-FROM users U
-LEFT JOIN expenses EP ON U.id = EP.user_id
-LEFT JOIN budgets BD ON U.id = BD.user_id AND EP.category_id = BD.category_id
-WHERE U.id = $1
-GROUP BY EP.category_id;
+FROM budgets BD
+LEFT JOIN expenses EP ON BD.category_id = EP.category_id
+    AND EP.user_id = BD.user_id
+    AND DATE_TRUNC('month', EP.date) = DATE_TRUNC('month', NOW())
+WHERE BD.user_id = $1
+GROUP BY BD.id, BD.category_id, BD.amount;

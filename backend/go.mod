@@ -10,3 +10,5 @@ require (
 require github.com/golang-jwt/jwt/v5 v5.3.1
 
 require golang.org/x/crypto v0.57.0
+
+require github.com/gorilla/websocket v1.5.3 // indirect

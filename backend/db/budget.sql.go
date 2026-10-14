@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createBudget = `-- name: CreateBudget :one
@@ -75,30 +74,31 @@ func (q *Queries) GetBudget(ctx context.Context, arg GetBudgetParams) (Budget, e
 
 const getBudgetSummary = `-- name: GetBudgetSummary :many
 SELECT 
-EP.category_id,
+BD.category_id,
 SUM(BD.amount) as budgetAmount,
-SUM(EP.amount) as totalSpent,
+COALESCE(SUM(EP.amount), 0) as totalSpent,
 SUM(BD.amount) - SUM(EP.amount) as remaining,
 (SUM(EP.amount) / SUM(BD.amount)) * 100 as percentage,
 DATE_TRUNC('month', NOW())
-FROM users U
-LEFT JOIN expenses EP ON U.id = EP.user_id
-LEFT JOIN budgets BD ON U.id = BD.user_id AND EP.category_id = BD.category_id
-WHERE U.id = $1
-GROUP BY EP.category_id
+FROM budgets BD
+LEFT JOIN expenses EP ON BD.category_id = EP.category_id
+    AND EP.user_id = BD.user_id
+    AND DATE_TRUNC('month', EP.date) = DATE_TRUNC('month', NOW())
+WHERE BD.user_id = $1
+GROUP BY BD.id, BD.category_id, BD.amount
 `
 
 type GetBudgetSummaryRow struct {
-	CategoryID   sql.NullInt64
+	CategoryID   int64
 	Budgetamount int64
-	Totalspent   int64
+	Totalspent   interface{}
 	Remaining    int32
 	Percentage   int32
 	DateTrunc    int64
 }
 
-func (q *Queries) GetBudgetSummary(ctx context.Context, id int64) ([]GetBudgetSummaryRow, error) {
-	rows, err := q.db.QueryContext(ctx, getBudgetSummary, id)
+func (q *Queries) GetBudgetSummary(ctx context.Context, userID int64) ([]GetBudgetSummaryRow, error) {
+	rows, err := q.db.QueryContext(ctx, getBudgetSummary, userID)
 	if err != nil {
 		return nil, err
 	}
