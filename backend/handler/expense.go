@@ -11,6 +11,7 @@ import (
 	"github.com/jjlee2712/coinflow/backend/db"
 	"github.com/jjlee2712/coinflow/backend/hub"
 	"github.com/jjlee2712/coinflow/backend/middleware"
+	"github.com/jjlee2712/coinflow/backend/service"
 )
 
 type ExpensesHandler struct {
@@ -70,6 +71,16 @@ func (h *ExpensesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		})
 		if err == nil {
 			h.Hub.Broadcast(userId, jsonBytes)
+			alerts := service.CheckBudgetAlerts(budget)
+			if len(alerts) > 0 {
+				alertBytes, err := json.Marshal(wsMessage{
+					Type: "budget_alert",
+					Data: alerts,
+				})
+				if err == nil {
+					h.Hub.Broadcast(userId, alertBytes)
+				}
+			}
 		}
 	}()
 
@@ -225,6 +236,16 @@ func (h *ExpensesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		})
 		if err == nil {
 			h.Hub.Broadcast(userID, jsonBytes)
+			alerts := service.CheckBudgetAlerts(budget)
+			if len(alerts) > 0 {
+				alertBytes, err := json.Marshal(wsMessage{
+					Type: "budget_alert",
+					Data: alerts,
+				})
+				if err == nil {
+					h.Hub.Broadcast(userID, alertBytes)
+				}
+			}
 		}
 	}()
 
