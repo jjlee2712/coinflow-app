@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -8,11 +9,13 @@ import (
 	"time"
 
 	"github.com/jjlee2712/coinflow/backend/db"
+	"github.com/jjlee2712/coinflow/backend/hub"
 	"github.com/jjlee2712/coinflow/backend/middleware"
 )
 
 type ExpensesHandler struct {
 	Queries *db.Queries
+	Hub     *hub.Hub
 }
 
 type expensesRequest struct {
@@ -20,6 +23,11 @@ type expensesRequest struct {
 	Amount     string `json:"amount"`
 	Note       string `json:"note"`
 	Date       string `json:"date"`
+}
+
+type wsMessage struct {
+	Type string `json:"type"`
+	Data any    `json:"data"`
 }
 
 func (h *ExpensesHandler) getUserID(r *http.Request) int64 {
@@ -52,6 +60,18 @@ func (h *ExpensesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	go func() {
+		budget, _ := h.Queries.GetBudgetSummary(context.Background(), userId)
+
+		jsonBytes, err := json.Marshal(wsMessage{
+			Type: "summary_update",
+			Data: budget,
+		})
+		if err == nil {
+			h.Hub.Broadcast(userId, jsonBytes)
+		}
+	}()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -195,6 +215,18 @@ func (h *ExpensesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
 	}
+
+	go func() {
+		budget, _ := h.Queries.GetBudgetSummary(context.Background(), userID)
+
+		jsonBytes, err := json.Marshal(wsMessage{
+			Type: "summary_update",
+			Data: budget,
+		})
+		if err == nil {
+			h.Hub.Broadcast(userID, jsonBytes)
+		}
+	}()
 
 	w.WriteHeader(http.StatusNoContent)
 }

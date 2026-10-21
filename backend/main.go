@@ -68,6 +68,7 @@ func main() {
 
 	expensesHandler := &handler.ExpensesHandler{
 		Queries: queries,
+		Hub:     h,
 	}
 
 	budgetHandler := &handler.BudgetHandler{
