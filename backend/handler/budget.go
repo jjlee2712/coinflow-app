@@ -119,7 +119,7 @@ func (h *BudgetHandler) GetBudgetSummary(w http.ResponseWriter, r *http.Request)
 
 	budgets, err := h.Queries.GetBudgetSummary(r.Context(), userID)
 	if err != nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
