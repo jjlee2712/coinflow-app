@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+
 import { api } from "@/lib/api"
-import { useWebSocket } from "@/hooks/useWebSocket"
+import { useWSMessage } from "@/context/WebSocketContext"
 
 type SummaryRow = {
   CategoryID: number
@@ -16,6 +17,7 @@ type SummaryRow = {
 
 type Alert = {
   categoryId: number
+  categoryName: string
   percentage: number
   severity: string
 }
@@ -28,36 +30,39 @@ type Toast = {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [token, setToken] = useState<string | null>(null)
   const [summary, setSummary] = useState<SummaryRow[]>([])
+  const summaryRef = useRef<SummaryRow[]>([])
   const [toasts, setToasts] = useState<Toast[]>([])
-  const lastMessage = useWebSocket(token)
+  const lastMessage = useWSMessage()
+  const lastHandledMessage = useRef<typeof lastMessage>(null)
 
   useEffect(() => {
-    const t = localStorage.getItem("token")
-    if (!t) {
+    if (!localStorage.getItem("token")) {
       router.push("/login")
       return
     }
-    setToken(t)
     loadSummary()
   }, [])
 
   useEffect(() => {
-    if (!lastMessage) return
+    if (!lastMessage || lastMessage === lastHandledMessage.current) return
+    lastHandledMessage.current = lastMessage
 
     if (lastMessage.type === "summary_update") {
-      setSummary(lastMessage.data as SummaryRow[])
+      const rows = lastMessage.data as SummaryRow[]
+      setSummary(rows)
+      summaryRef.current = rows
     }
 
     if (lastMessage.type === "budget_alert") {
       const alerts = lastMessage.data as Alert[]
       alerts.forEach((alert) => {
         const id = Date.now() + Math.random()
+        const categoryName = alert.categoryName || `Category ${alert.categoryId}`
         const msg =
           alert.severity === "exceeded"
-            ? `🚨 Budget exceeded for category ${alert.categoryId}! (${alert.percentage}% used)`
-            : `⚠️ Warning: ${alert.percentage}% of budget used for category ${alert.categoryId}`
+            ? `🚨 Budget exceeded for ${categoryName}! (${alert.percentage.toFixed(1)}% used)`
+            : `⚠️ Warning: ${alert.percentage.toFixed(1)}% of budget used for ${categoryName}`
 
         setToasts((prev) => [...prev, { id, message: msg, severity: alert.severity }])
         setTimeout(() => {
@@ -69,8 +74,9 @@ export default function DashboardPage() {
 
   async function loadSummary() {
     try {
-      const data = await api.getSummary()
-      setSummary(data || [])
+      const data = await api.getSummary() || []
+      setSummary(data)
+      summaryRef.current = data
     } catch {
       setSummary([])
     }

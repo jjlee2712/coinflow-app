@@ -7,9 +7,10 @@ import (
 )
 
 type BudgetAlert struct {
-	CategoryID int64   `json:"categoryId"`
-	Percentage float32 `json:"percentage"`
-	Severity   string  `json:"severity"`
+	CategoryID   int64   `json:"categoryId"`
+	CategoryName string  `json:"categoryName"`
+	Percentage   float32 `json:"percentage"`
+	Severity     string  `json:"severity"`
 }
 
 func CheckBudgetAlerts(summaries []db.GetBudgetSummaryRow) []BudgetAlert {
@@ -31,9 +32,10 @@ func CheckBudgetAlerts(summaries []db.GetBudgetSummaryRow) []BudgetAlert {
 		}
 
 		alerts = append(alerts, BudgetAlert{
-			CategoryID: c.CategoryID,
-			Percentage: float32(pct),
-			Severity:   severity,
+			CategoryID:   c.CategoryID,
+			CategoryName: c.Categoryname,
+			Percentage:   float32(pct),
+			Severity:     severity,
 		})
 	}
 	return alerts
